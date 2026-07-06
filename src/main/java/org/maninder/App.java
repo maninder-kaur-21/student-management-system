@@ -6,6 +6,8 @@ import org.maninder.model.Student;
 import org.maninder.service.StudentService;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
+import java.sql.SQLException;
+
 public class App {
     public static void main(String[] args) {
 
@@ -20,10 +22,18 @@ public class App {
             student.setGender(Gender.FEMALE);
             student.setEmail("alice+jane@example.com");
             student.setCourse("Spring Framework");
-            student.setSemester(4);
+            student.setSemester(2);
+            //student.setSemester(0); //For testing @Transactional
+            //student.setSemester(9); //For testing @Transactional
 
             System.out.println("\n===== ADD STUDENT =====");
-            service.addStudent(student);
+            try {
+                service.addStudent(student);
+            } catch (RuntimeException e) {
+                System.out.println(e.getMessage());
+            } catch (Exception e) {
+                System.out.println("Something went wrong. " + e.getMessage());
+            }
 
             // 2. Display all students
 

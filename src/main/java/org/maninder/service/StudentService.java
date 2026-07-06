@@ -1,10 +1,13 @@
 package org.maninder.service;
 
+import org.maninder.event.StudentRegisteredEvent;
 import org.maninder.model.Student;
 import org.maninder.repository.StudentRepository;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -15,19 +18,29 @@ public class StudentService {
 
     private final NotificationService notificationService;
 
-    public StudentService(StudentRepository repository, @Qualifier("smsNotificationService") NotificationService notificationService) {
+    private final ApplicationEventPublisher publisher;
+
+    public StudentService(StudentRepository repository, @Qualifier("smsNotificationService") NotificationService notificationService, ApplicationEventPublisher publisher) {
         this.studentRepository = repository;
         this.notificationService = notificationService;
+        this.publisher = publisher;
     }
 
     public String sendNotification() {
         return notificationService.sendNotification();
     }
 
+    @Transactional
     public void addStudent(Student student) {
         int rows = studentRepository.saveStudent(student);
         if (rows > 0) {
             System.out.println("\nStudent saved successfully.");
+
+            if (student.getSemester() < 1 || student.getSemester() > 8) {
+                throw new RuntimeException("\n===== Testing rollback for @Transactional =====\nRollback due to invalid semester value. ");
+            }
+
+            publisher.publishEvent(new StudentRegisteredEvent(student)); //StudentRegisteredEvent published or emitted
         }
     }
 
